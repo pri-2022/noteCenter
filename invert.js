@@ -1258,55 +1258,26 @@
 
 #### （3）泛型约束
 
+- 在函数内部使用泛型变量的时候，由于事先不知道它是哪种类型，所以不能随意的操作它的属性或方法：
 
+  ```ts
+  function loggingIdentity<T>(arg: T): T {
+      console.log(arg.length);
+      return arg;
+  }
+  
+  // index.ts(2,19): error TS2339: Property 'length' does not exist on type 'T'.
+  ```
 
+- 可以对泛型进行约束，只允许这个函数传入那些包含 `length` 属性的变量。这就是泛型约束。使用了 `extends` 约束了泛型 `T` 必须符合接口 `Lengthwise` 的形状，也就是必须包含 `length` 属性。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  ```ts
+  interface Lengthwise {
+      length: number;
+  }
+  
+  function loggingIdentity<T extends Lengthwise>(arg: T): T {
+      console.log(arg.length);
+      return arg;
+  }
+  ```
