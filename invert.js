@@ -1,1283 +1,1150 @@
-## 1、概述
+# 一、Vuex
 
-- 教程文档：[简介 · TypeScript 入门教程 (xcatliu.com)](https://ts.xcatliu.com/introduction/index.html)
+## 1、简介
 
-### 1）类型系统
+### 1）概述
 
-- 类型系统按照「类型检查的时机」来分类，可以分为动态类型和静态类型。
-- 动态类型是指在运行时才会进行类型检查，这种语言的类型错误往往会导致运行时错误。JavaScript 是一门解释型语言，没有编译阶段，所以它是动态类型。
-- 静态类型是指编译阶段就能确定每个变量的类型，这种语言的类型错误往往会导致语法错误。TypeScript 在运行前需要先编译为 JavaScript，而在编译阶段就会进行类型检查。
+- Vuex 是一个专为 Vue.js 应用程序开发的**状态管理模式**。
+- 它采用集中式存储管理应用的所有组件的状态，并以相应的规则保证状态以一种可预测的方式发生变化。
+- Vuex 和单纯的全局对象有以下两点不同：
+  1. Vuex 的状态存储是响应式的。当 Vue 组件从 store 中读取状态的时候，若 store 中的状态发生变化，那么相应的组件也会相应地得到高效更新。
+  2. 你不能直接改变 store 中的状态。改变 store 中的状态的唯一途径就是显式地提交  mutation。
 
-#### （1）JavaScript 动态类型
+### 2）示例
 
-- 没有类型约束，一个变量可能初始化时是字符串，过一会儿又被赋值为数字。
-- 由于隐式类型转换的存在，有的变量的类型很难在运行前就确定。
-- 基于原型的面向对象编程，使得原型上的属性或方法可以在运行时被修改。
+- 为了在 Vue 组件中访问 `this.$store` property，Vuex 提供了一个从根组件向所有子组件“注入”该 store 的机制。
 
-#### （2）TypeScript 静态类型
-
-- TypeScript 是添加了类型系统的 JavaScript，适用于任何规模的项目。
-- TypeScript 是一门静态类型、弱类型的语言。
-- TypeScript 是完全兼容 JavaScript 的，它不会修改 JavaScript 运行时的特性。
-
-### 2）设计理念
-
-- 在完整保留 JavaScript 运行时行为的基础上，通过引入静态类型系统来提高代码的可维护性，减少可能出现的 bug。
-
-## 2、基础
-
-### 1）原始数据类型
-
-#### （1）布尔值
-
-- 在 TypeScript 中，使用 `boolean` 定义布尔值类型。
-
-  ```javascript
-  let isDone: boolean = false;
-  ```
-
-- 注意，使用构造函数 `Boolean` 创造的对象**不是**布尔值,而是一个 `Boolean` 对象。
-
-  ```javascript
-  let createdByNewBoolean: Boolean = new Boolean(1);
-  ```
-
-#### （2）数值
-
-- 使用 `number` 定义数值类型。
-
-  - 其中 `0b1010` 和 `0o744` 是 ES6 中的二进制和八进制表示法，它们会被编译为十进制数字。
-
-  ```javascript
-  let decLiteral: number = 6;
-  let hexLiteral: number = 0xf00d;
-  // ES6 中的二进制表示法
-  let binaryLiteral: number = 0b1010;
-  // ES6 中的八进制表示法
-  let octalLiteral: number = 0o744;
-  let notANumber: number = NaN;
-  let infinityNumber: number = Infinity;
-  
-  ---编译结果：
-  
-  var decLiteral = 6;
-  var hexLiteral = 0xf00d;
-  // ES6 中的二进制表示法
-  var binaryLiteral = 10;
-  // ES6 中的八进制表示法
-  var octalLiteral = 484;
-  var notANumber = NaN;
-  var infinityNumber = Infinity;
-  ```
-
-#### （3）字符串
-
-- 使用 `string` 定义字符串类型
-
-  ```javascript
-  let myName: string = 'Tom';
-  let myAge: number = 25;
-  // 模板字符串
-  let sentence: string = `Hello, my name is ${myName}. I'll be ${myAge + 1} years old next month.`;
-  
-  ---编译结果：
-  
-  var myName = 'Tom';
-  var myAge = 25;
-  // 模板字符串
-  var sentence = "Hello, my name is " + myName + ". I'll be " + (myAge + 1) + " years old next month.";
-  ```
-
-#### （4）空值
-
-- JavaScript 没有空值（Void）的概念，在 TypeScript 中，可以用 `void` 表示没有任何返回值的函数。
-
-  ```javascript
-  function alertName(): void {
-      alert('My name is Tom');
-  }
-  ```
-
-#### （5）null 和 undefined
-
-- 在 TypeScript 中，可以使用 `null` 和 `undefined` 来定义这两个原始数据类型。
-
-  ```javascript
-  let u: undefined = undefined;
-  let n: null = null;
-  ```
-
-- 与 `void` 的区别是，`undefined` 和 `null` 是所有类型的子类型。也就是说 `undefined` 类型的变量，可以赋值给 `number` 类型的变量。
-
-  ```javascript
-  // 这样不会报错
-  let num: number = undefined;
-  ```
-
-### 2）任意值
-
-- 普通类型在赋值过程中改变类型是不被允许的，但如果是 `any` 类型，则允许被赋值为任意类型。
-
-  ```javascript
-  let myFavoriteNumber: any = 'seven';
-  myFavoriteNumber = 7;
-  ```
-
-- 如果定义的时候没有赋值，不管之后有没有赋值，都会被推断成 `any` 类型而完全不被类型检查。
-
-  ```javascript
-  let something;
-  something = 'seven';
-  something = 7;
-  
-  something.setName('Tom');
-  
-  ---等价于
-  
-  let something: any;
-  something = 'seven';
-  something = 7;
-  
-  something.setName('Tom');
-  ```
-
-### 3）类型推论
-
-- 如果没有明确的指定类型，那么 TypeScript 会依照类型推论的规则推断出一个类型。
-
-  ```javascript
-  let myFavoriteNumber = 'seven';
-  myFavoriteNumber = 7;
-  // index.ts(2,1): error TS2322: Type 'number' is not assignable to type 'string'.
-  
-  ---事实上，它等价于：
-  
-  let myFavoriteNumber: string = 'seven';
-  myFavoriteNumber = 7;
-  // index.ts(2,1): error TS2322: Type 'number' is not assignable to type 'string'.
-  ```
-
-### 4）联合类型
-
-#### （1）定义
-
-- 联合类型（Union Types）表示取值可以为多种类型中的一种。
-
-  ```javascript
-  let myFavoriteNumber: string | number;
-  myFavoriteNumber = 'seven';
-  myFavoriteNumber = 7;
-  // success
-  
-  let myFavoriteNumber: string | number;
-  myFavoriteNumber = true;
-  // index.ts(2,1): error TS2322: Type 'boolean' is not assignable to type 'string | number'.
-  ```
-
-- 联合类型的变量在被赋值的时候，会根据类型推论的规则推断出一个类型。
-
-  ```javascript
-  let myFavoriteNumber: string | number;
-  myFavoriteNumber = 'seven';
-  console.log(myFavoriteNumber.length); // 5
-  
-  myFavoriteNumber = 7;
-  console.log(myFavoriteNumber.length); // 编译时报错
-  // index.ts(5,30): error TS2339: Property 'length' does not exist on type 'number'.
-  ```
-
-#### （2）属性与方法
-
-- 当 TypeScript 不确定一个联合类型的变量到底是哪个类型的时候，我们 **只能访问此联合类型的所有类型里共有属性或方法。**
-
-- 例1，`length` 不是 `string` 和 `number` 的共有属性，所以会报错。
-
-  ```javascript
-  function getLength(something: string | number): number {
-      return something.length;
-  }
-  
-  // index.ts(2,22): error TS2339: Property 'length' does not exist on type 'string | number'.
-  //   Property 'length' does not exist on type 'number'.
-  ```
-
-- 例2，访问 `string` 和 `number` 的共有属性是没问题的。
-
-  ```javascript
-  function getString(something: string | number): string {
-      return something.toString();
-  }
-  ```
-
-### 5）接口
-
-#### （1）定义
-
-- 在面向对象语言中，接口（Interfaces）是一个很重要的概念，它是对行为的抽象，而具体如何行动需要由类（classes）去实现（implement）。
-
-- 定义的变量比接口多了或者少了一些属性都是不允许的。
-
-  ```javascript
-  interface Person {
-      name: string;
-      age: number;
-  }
-  
-  let tom: Person = {
-      name: 'Tom',
-      age: 25
-  };
-  ```
-
-#### （2）可选属性
-
-- 可选属性的含义是该属性可以不存在。
-
-  ```javascript
-  interface Person {
-      name: string;
-      age?: number;
-  }
-  
-  let tom: Person = {
-      name: 'Tom'
-  };
-  ```
-
-- 这时**仍然不允许添加未定义的属性**。
-
-  ```javascript
-  interface Person {
-      name: string;
-      age?: number;
-  }
-  
-  let tom: Person = {
-      name: 'Tom',
-      age: 25,
-      gender: 'male'
-  };
-      
-  //   Object literal may only specify known properties, and 'gender' does not exist in type 'Person'.
-  ```
-
-#### （3）任意属性
-
-- 接口允许有任意的属性，可以使用如下方式。
-
-  ```javascript
-  interface Person {
-      name: string;
-      age?: number;
-      [propName: string]: any;
-  }
-  
-  let tom: Person = {
-      name: 'Tom',
-      gender: 'male'
-  };
-  ```
-
-- **定义了任意属性，那么确定属性和可选属性的类型都必须是它的类型的子集**。
-
-  ```javascript
-  interface Person {
-      name: string;
-      age?: number;
-      [propName: string]: string;
-  }
-  
-  let tom: Person = {
-      name: 'Tom',
-      age: 25,
-      gender: 'male'
-  };
-  
-  // index.ts(3,5): error TS2411: Property 'age' of type 'number' is not assignable to string index type 'string'.
-  // Index signatures are incompatible.
-  // Type 'string | number' is not assignable to type 'string'.
-  // Type 'number' is not assignable to type 'string'.
-  ```
-
-- 一个接口中只能定义一个任意属性。如果接口中有多个类型的属性，则可以在任意属性中使用联合类型。
-
-  ```javascript
-  interface Person {
-      name: string;
-      age?: number;
-      [propName: string]: string | number;
-  }
-  
-  let tom: Person = {
-      name: 'Tom',
-      age: 25,
-      gender: 'male'
-  };
-  ```
-
-#### （4）只读属性
-
-- 有时候我们希望对象中的一些字段只能在创建的时候被赋值，那么可以用 `readonly` 定义只读属性。
-
-  ```javascript
-  interface Person {
-      readonly id: number;
-      name: string;
-      age?: number;
-      [propName: string]: any;
-  }
-  
-  let tom: Person = {
-      id: 89757,
-      name: 'Tom',
-      gender: 'male'
-  };
-  
-  tom.id = 9527;
-  
-  // index.ts(14,5): error TS2540: Cannot assign to 'id' because it is a constant or a read-only property.
-  ```
-
-### 6）数组类型
-
-#### （1）「类型 + 方括号」
-
-- 最简单的方法是使用「类型 + 方括号」来表示数组，数组的项中**不允许**出现其他的类型。
+- 简单地说，如果不在此处挂载，则很多 Vue 文件都要引入 store ,那是相当的麻烦。
 
   ```ts
-  let fibonacci: number[] = [1, 1, 2, 3, 5];
-  // success
+  // main.js
+  new Vue({
+    el: '#app',
+    store
+  })
   
-  let fibonacci: number[] = [1, '1', 2, 3, 5];
-  // Type 'string' is not assignable to type 'number'.
-  ```
-
-- 数组的一些方法的参数也会根据数组在定义时约定的类型进行限制。
-
-  ```ts
-  let fibonacci: number[] = [1, 1, 2, 3, 5];
-  fibonacci.push('8');
-  // Argument of type '"8"' is not assignable to parameter of type 'number'.
-  ```
-
-#### （2）数组泛型
-
-- 我们也可以使用数组泛型（Array Generic） `Array<elemType>` 来表示数组：
-
-  ```ts
-  let fibonacci: Array<number> = [1, 1, 2, 3, 5];
-  ```
-
-#### （3）接口表示数组
-
-- 虽然接口也可以用来描述数组，但是我们一般不会这么做，因为这种方式比前两种方式复杂多了。不过有一种情况例外，那就是它常用来表示类数组。
-
-  ```ts
-  interface NumberArray {
-      [index: number]: number;
-  }
-  let fibonacci: NumberArray = [1, 1, 2, 3, 5];
-  ```
-
-#### （4）any 在数组中的应用
-
-- ==一个比较常见的做法是，用 `any` 表示数组中允许出现任意类型==
-
-  ```javascript
-  let list: any[] = ['xcatliu', 25, { website: 'http://xcatliu.com' }];
-  ```
-
-### 7）函数类型
-
-#### （1）函数声明
-
-- 一个函数有输入和输出，要在 TypeScript 中对其进行约束，需要把输入和输出都考虑到。
-
-  ```ts
-  function sum(x: number, y: number): number {
-      return x + y;
+  methods: {
+    increment() {
+      this.$store.commit('increment')
+      console.log(this.$store.state.count)
+    }
   }
   ```
 
-#### （2）函数表达式
+## 2、核心
 
-- 在 TypeScript 的类型定义中，`=>` 用来表示函数的定义，左边是输入类型，需要用括号括起来，右边是输出类型。
+### 1）State
 
-  ```tsx
-  let mySum: (x: number, y: number) => number = function (x: number, y: number): number {
-      return x + y;
-  };
-  ```
+- Vuex 采用单一状态树，用一个对象就包含了全部的应用层级状态。这也意味着，每个应用将仅仅包含一个 store 实例。
 
-#### （3）可选参数
+#### （1）获取状态
 
-- 可选参数后面不允许再出现必需参数。
-
-  ```ts
-  function buildName(firstName: string, lastName?: string) {
-      if (lastName) {
-          return firstName + ' ' + lastName;
-      } else {
-          return firstName;
-      }
-  }
-  let tomcat = buildName('Tom', 'Cat');
-  let tom = buildName('Tom');
-  ```
-
-#### （4）参数默认值
-
-- 在 ES6 中，我们允许给函数的参数添加默认值，**TypeScript 会将添加了默认值的参数识别为可选参数**。
-
-  ```ts
-  function buildName(firstName: string, lastName: string = 'Cat') {
-      return firstName + ' ' + lastName;
-  }
-  let tomcat = buildName('Tom', 'Cat');
-  let tom = buildName('Tom');
-  ```
-
-- 此时就不受「可选参数必须接在必需参数后面」的限制。
-
-  ```ts
-  function buildName(firstName: string = 'Tom', lastName: string) {
-      return firstName + ' ' + lastName;
-  }
-  let tomcat = buildName('Tom', 'Cat');
-  let cat = buildName(undefined, 'Cat');
-  ```
-
-#### （5）剩余参数
-
-- ES6 中，可以使用 `...rest` 的方式获取函数中的剩余参数（rest 参数）
+- 由于 Vuex 的状态存储是响应式的，从 store 实例中读取状态最简单的方法就是在计算属性中返回某个状态。
 
   ```js
-  function push(array, ...items) {
-      items.forEach(function(item) {
-          array.push(item);
-      });
-  }
-  
-  let a: any[] = [];
-  push(a, 1, 2, 3);
-  ```
-
-- 事实上，`items` 是一个数组。所以我们可以用数组的类型来定义它。
-
-  ```ts
-  function push(array: any[], ...items: any[]) {
-      items.forEach(function(item) {
-          array.push(item);
-      });
-  }
-  
-  let a = [];
-  push(a, 1, 2, 3);
-  ```
-
-#### （6）重载
-
-- 重载允许一个函数接受不同数量或类型的参数时，作出不同的处理。
-
-  ```tsx
-  function reverse(x: number): number;
-  function reverse(x: string): string;
-  function reverse(x: number | string): number | string | void {
-      if (typeof x === 'number') {
-          return Number(x.toString().split('').reverse().join(''));
-      } else if (typeof x === 'string') {
-          return x.split('').reverse().join('');
+  // 创建一个 Counter 组件
+  // 每当 `store.state.count` 变化的时候, 都会重新求取计算属性，并且触发更新相关联的 DOM。
+  const Counter = {
+    template: `<div>{{ count }}</div>`,
+    computed: {
+      count () {
+        return store.state.count
       }
+    }
   }
   ```
 
-- 上例中，我们重复定义了多次函数 `reverse`，前几次都是函数定义，最后一次是函数实现。在编辑器的代码提示中，可以正确的看到前两个提示。
+#### （2）mapState 辅助函数
 
-- 注意，TypeScript 会优先从最前面的函数定义开始匹配，所以多个函数定义如果有包含关系，需要优先把精确的定义写在前面。
-
-### 8）类型断言
-
-#### （1）语法
-
-```ts
-值 as 类型
-
-或
-
-<类型>值
-```
-
-#### （2）用途
-
-##### 【1】联合类型断言为类型
-
-- 有时候，我们确实需要在还不确定类型的时候就访问其中一个类型特有的属性或方法，如下获取 `animal.swim` 的时候会报错。
-
-  ```ts
-  interface Cat {
-      name: string;
-      run(): void;
-  }
-  interface Fish {
-      name: string;
-      swim(): void;
-  }
-  
-  function isFish(animal: Cat | Fish) {
-      if (typeof animal.swim === 'function') {
-          return true;
-      }
-      return false;
-  }
-  
-  // index.ts:11:23 - error TS2339: Property 'swim' does not exist on type 'Cat | Fish'.
-  //   Property 'swim' does not exist on type 'Cat'.
-  ```
-
-- 此时可以使用类型断言，将 `animal` 断言成 `Fish`。
-
-  ```ts
-  interface Cat {
-      name: string;
-      run(): void;
-  }
-  interface Fish {
-      name: string;
-      swim(): void;
-  }
-  
-  function isFish(animal: Cat | Fish) {
-      if (typeof (animal as Fish).swim === 'function') {
-          return true;
-      }
-      return false;
-  }
-  ```
-
-##### 【2】父类断言为子类
-
-- 当类之间有继承关系时，类型断言也是很常见。
-
-  ```ts
-  class ApiError extends Error {
-      code: number = 0;
-  }
-  class HttpError extends Error {
-      statusCode: number = 200;
-  }
-  
-  function isApiError(error: Error) {
-      if (typeof (error as ApiError).code === 'number') {
-          return true;
-      }
-      return false;
-  }
-  ```
-
-- 上面的例子中，我们声明了函数 `isApiError`，它用来判断传入的参数是不是 `ApiError` 类型，为了实现这样一个函数，它的参数的类型肯定得是比较抽象的父类 `Error`，这样的话这个函数就能接受 `Error` 或它的子类作为参数了。
-
-  但是由于父类 `Error` 中没有 `code` 属性，故直接获取 `error.code` 会报错，需要使用类型断言获取 `(error as ApiError).code`。
-
-##### 【3】任何类型断言为 any
-
-- 我们需要将 `window` 上添加一个属性 `foo`，但 TypeScript 编译时会报错，提示我们 `window` 上不存在 `foo` 属性。
-
-  此时我们可以使用 `as any` 临时将 `window` 断言为 `any` 类型。
-
-  ```ts
-  window.foo = 1;
-  // index.ts:1:8 - error TS2339: Property 'foo' does not exist on type 'Window & typeof globalThis'.
-  
-  (window as any).foo = 1;
-  ```
-
-- ==需要注意的是，将一个变量断言为 `any` 可以说是解决 TypeScript 中类型问题的最后一个手段。==
-
-  **它极有可能掩盖了真正的类型错误，所以如果不是非常确定，就不要使用 `as any`。**
-
-##### 【4】any断言为具体类型
-
-- 在日常的开发中，我们不可避免的需要处理 `any` 类型的变量，它们可能是由于第三方库未能定义好自己的类型，也有可能是历史遗留的或其他人编写的烂代码，还可能是受到 TypeScript 类型系统的限制而无法精确定义类型的场景。
-
-- 举例来说，历史遗留的代码中有个 `getCacheData`，它的返回值是 `any`：
-
-  ```ts
-  function getCacheData(key: string): any {
-      return (window as any).cache[key];
-  }
-  ```
-
-- 我们调用完 `getCacheData` 之后，立即将它断言为 `Cat` 类型。这样的话明确了 `tom` 的类型，后续对 `tom` 的访问时就有了代码补全，提高了代码的可维护性。
-
-  ```javascript
-  function getCacheData(key: string): any {
-      return (window as any).cache[key];
-  }
-  
-  interface Cat {
-      name: string;
-      run(): void;
-  }
-  
-  const tom = getCacheData('tom') as Cat;
-  tom.run();
-  ```
-
-#### （3）限制
-
-- 要使得 `A` 能够被断言为 `B`，只需要 `A` 兼容 `B` 或 `B` 兼容 `A` 即可，这也是为了在类型断言时的安全考虑，毕竟毫无根据的断言是非常危险的。
-
-- `Cat` 包含了 `Animal` 中的所有属性，除此之外，它还有一个额外的方法 `run`。TypeScript 并不关心 `Cat` 和 `Animal` 之间定义时是什么关系，而只会看它们最终的结构有什么关系——所以它与 `Cat extends Animal` 是等价的。
-
-  ```ts
-  interface Animal {
-      name: string;
-  }
-  interface Cat {
-      name: string;
-      run(): void;
-  }
-  
-  let tom: Cat = {
-      name: 'Tom',
-      run: () => { console.log('run') }
-  };
-  let animal: Animal = tom;
-  
-  ---等价于
-  
-  interface Animal {
-      name: string;
-  }
-  interface Cat extends Animal {
-      run(): void;
-  }
-  ```
-
-- 那么也不难理解为什么 `Cat` 类型的 `tom` 可以赋值给 `Animal` 类型的 `animal` 了——就像面向对象编程中我们可以将子类的实例赋值给类型为父类的变量。
-
-  当 `Animal` 兼容 `Cat` 时，它们就可以互相进行类型断言了。
-
-  ```ts
-  interface Animal {
-      name: string;
-  }
-  interface Cat {
-      name: string;
-      run(): void;
-  }
-  
-  function testAnimal(animal: Animal) {
-      return (animal as Cat);
-  }
-  function testCat(cat: Cat) {
-      return (cat as Animal);
-  }
-  ```
-
-#### （4）比较
-
-##### 【1】断言 vs 类型转换
-
-- 类型断言只会影响 TypeScript 编译时的类型，类型断言语句在编译结果中会被删除。例子中，将 `something` 断言为 `boolean` 虽然可以通过编译，但是并没有什么用。
-
-  ```ts
-  function toBoolean(something: any): boolean {
-      return something as boolean;
-  }
-  
-  toBoolean(1);
-  // 返回值为 1
-  
-  ---编译后
-  
-  function toBoolean(something) {
-      return something;
-  }
-  
-  toBoolean(1);
-  // 返回值为 1
-  ```
-
-- 类型断言不是类型转换，它不会真的影响到变量的类型。若要进行类型转换，需要直接调用类型转换的方法：
-
-  ```ts
-  function toBoolean(something: any): boolean {
-      return Boolean(something);
-  }
-  
-  toBoolean(1);
-  // 返回值为 true
-  ```
-
-##### 【2】断言 vs 类型声明
-
-- 类型声明是比类型断言更加严格。
-
-### 9）声明文件
-
-- 当使用第三方库时，我们需要引用它的声明文件，才能获得对应的代码补全、接口提示等功能。
-
-### 10）内置对象
-
-- 内置对象是指根据标准在全局作用域（Global）上存在的对象。这里的标准是指 ECMAScript 和其他环境（比如 DOM）的标准。
-
-#### （1）ECMAScript 内置对象
-
-- ECMAScript 标准提供的内置对象有：`Boolean`、`Error`、`Date`、`RegExp` 等。
+- 当一个组件需要获取多个状态的时候，将这些状态都声明为计算属性会有些重复和冗余，我们可以使用 `mapState` 辅助函数帮助我们生成计算属性。
 
   ```js
-  let b: Boolean = new Boolean(1);
-  let e: Error = new Error('Error occurred');
-  let d: Date = new Date();
-  let r: RegExp = /[a-z]/;
+  import { mapState } from 'vuex';
+  export default{
+      computed:{
+          ...mapState("loginModule",["userinfo"])
+      }
+  }
   ```
 
-#### （2）DOM、BOM 内置对象
+### 2）Getter
 
-- DOM 和 BOM 提供的内置对象有：`Document`、`HTMLElement`、`Event`、`NodeList` 等。
+- 就像计算属性一样，getter 的返回值会根据它的依赖被缓存起来，且只有当它的依赖值发生了改变才会被重新计算。
+
+- Getter 接受 state 作为其第一个参数，也可以接受其他 getter 作为第二个参数。
 
   ```js
-  let body: HTMLElement = document.body;
-  let allDiv: NodeList = document.querySelectorAll('div');
-  document.addEventListener('click', function(e: MouseEvent) {
-    // Do something
-  });
+  const store = new Vuex.Store({
+    state: {
+      todos: [
+        { id: 1, text: '...', done: true },
+        { id: 2, text: '...', done: false }
+      ]
+    },
+    getters: {
+      doneTodos: state => {
+        return state.todos.filter(todo => todo.done)
+      }
+        
+      doneTodosCount: (state, getters) => {
+        return getters.doneTodos.length
+    }
+    }
+  })
   ```
+
+#### （1）通过属性访问
+
+- Getter 会暴露为 `store.getters` 对象，你可以以属性的形式访问这些值。
+
+- 注意，getter 在通过属性访问时是作为 Vue 的响应式系统的一部分缓存其中的。
+
+  ```js
+  store.getters.doneTodos // -> [{ id: 1, text: '...', done: true }]
+  ```
+
+#### （2）通过方法访问
+
+- 通过让 getter 返回一个函数，来实现给 getter 传参。在你对 store 里的数组进行查询时非常有用。
+
+- 注意，getter 在通过方法访问时，每次都会去进行调用，而不会缓存结果。
+
+  ```js
+  getters: {
+    // ...
+    getTodoById: (state) => (id) => {
+      return state.todos.find(todo => todo.id === id)
+    }
+  }
+  store.getters.getTodoById(2) // -> { id: 2, text: '...', done: false }
+  ```
+
+#### （3）mapGetters 辅助函数
+
+- `mapGetters` 辅助函数仅仅是将 store 中的 getter 映射到局部计算属性：
+
+  ```js
+  import { mapGetters } from 'vuex'
+  
+  export default {
+    computed: {
+    // 使用对象展开运算符将 getter 混入 computed 对象中
+      ...mapGetters([
+        'doneTodosCount',
+        'anotherGetter',
+      ])
+    }
+  }
+  ```
+
+- 如果你想将一个 getter 属性另取一个名字，使用对象形式
+
+  ```js
+  ...mapGetters({
+    // 把 `this.doneCount` 映射为 `this.$store.getters.doneTodosCount`
+    doneCount: 'doneTodosCount'
+  })
+  ```
+
+### 3）Mutation
+
+- 更改 Vuex 的 store 中的状态的唯一方法是提交 mutation。
+
+#### （1）事件注册
+
+- 每个 mutation 都有一个字符串的事件类型和 一个 handler。这个回调函数就是我们实际进行状态更改的地方，并且它会接受 state 作为第一个参数。
+
+  ```js
+  const store = new Vuex.Store({
+    state: {
+      count: 1
+    },
+    mutations: {
+      increment (state) {
+        // 变更状态
+        state.count++
+      }
+    }
+  })
+  ```
+
+#### （2）事件调用
+
+- 唤醒一个 mutation handler，你需要以相应的 type 调用 **store.commit** 方法。
+
+  ```js
+  store.commit('increment')
+  ```
+
+- 你可以向 `store.commit` 传入额外的参数，即 mutation 的 **载荷（payload）**。
+
+  在大多数情况下，载荷应该是一个对象，这样可以包含多个字段并且记录的 mutation 会更易读。
+
+  ```js
+  mutations: {
+    increment (state, payload) {
+      state.count += payload.amount
+    }
+  }
+  
+  store.commit('increment', {
+    amount: 10
+  })
+  ```
+
+#### （3）注意事项
+
+- store 中的状态是响应式的，当我们变更状态时，监视状态的 Vue 组件也会自动更新。这意味着 mutation 也需要与使用 Vue 一样遵守一些注意事项：
+
+  ```js
+  // 1. 最好提前在 store 中初始化好所有所需属性。
+  // 2. 在对象上添加新属性时。
+  
+  Vue.set(obj, 'newProp', 123) // 添加属性
+  state.obj = {...state.obj , newProp:123 }	// 新对象替换老对象
+  ```
+
+#### （4）同步函数
+
+- 观察 devtool 中的 mutation 日志，为了记录每一条 mutation ，devtools 需要捕捉到 mutation 前一状态和后一状态的快照。
+- 这要求 mutation 必须是同步函数。因为回调函数中进行的状态的改变都是不可追踪的。
+
+#### （5）mapMutations辅助函数
+
+- 使用 `mapMutations` 辅助函数将组件中的 methods 映射为 `store.commit` 调用。
+
+  ```js
+  import { mapMutations } from 'vuex'
+  
+  export default {
+    methods: {
+      ...mapMutations([
+        'increment', // 将 `this.increment()` 映射为 `this.$store.commit('increment')`
+  
+        // `mapMutations` 也支持载荷：
+        'incrementBy' // 将 `this.incrementBy(amount)` 映射为 `this.$store.commit('incrementBy', amount)`
+      ]),
+      ...mapMutations({
+        add: 'increment' // 将 `this.add()` 映射为 `this.$store.commit('increment')`
+      }),
+      ...mapMutations('loginModule',['setUser']),	// 模块
+    }
+  }
+  ```
+
+### 4）Actions
+
+- Action 类似于 mutation，不同在于 Action 提交的是 mutation，而不是直接变更状态，而且 Action 可以包含任意异步操作。
+
+  ```js
+  const store = new Vuex.Store({
+    state: {
+      count: 0
+    },
+    mutations: {
+      increment (state) {
+        state.count++
+      }
+    },
+    actions: {
+      increment (context) {
+        context.commit('increment')
+      }
+    }
+  })
+  ```
+
+- Action 函数接受一个与 store 实例具有相同方法和属性的 context 对象。
+
+  因此你可以调用 `context.commit` 提交一个 mutation，或者通过 `context.state` 和 `context.getters` 来获取 state 和 getters。
+
+#### （1）分发 Action
+
+- Action 通过 `store.dispatch` 方法触发：
+
+  ```js
+  store.dispatch('increment')
+  ```
+
+- Actions 支持同样的载荷方式和对象方式进行分发
+
+  ```js
+  // 以载荷形式分发
+  store.dispatch('incrementAsync', {
+    amount: 10
+  })
+  
+  // 以对象形式分发
+  store.dispatch({
+    type: 'incrementAsync',
+    amount: 10
+  })
+  ```
+
+#### （2）mapActions 辅助函数
+
+- 使用 `mapActions` 辅助函数将组件的 methods 映射为 `store.dispatch` 调用。
+
+  ```js
+  import { mapActions } from 'vuex'
+  
+  export default {
+    methods: {
+      ...mapActions([
+        'increment', // 将 `this.increment()` 映射为 `this.$store.dispatch('increment')`
+  
+        // `mapActions` 也支持载荷：
+        'incrementBy' // 将 `this.incrementBy(amount)` 映射为 `this.$store.dispatch('incrementBy', amount)`
+      ]),
+      ...mapActions({
+        add: 'increment' // 将 `this.add()` 映射为 `this.$store.dispatch('increment')`
+      })
+    }
+  }
+  ```
+
+### 5）Module
+
+- Vuex 允许我们将 store 分割成**模块（module）**。每个模块拥有自己的 state、mutation、action、getter、甚至是嵌套子模块。
+
+  ```js
+  const moduleA = {
+    state: () => ({ ... }),
+    mutations: { ... },
+    actions: { ... },
+    getters: { ... }
+  }
+  
+  const moduleB = {
+    state: () => ({ ... }),
+    mutations: { ... },
+    actions: { ... }
+  }
+  
+  const store = new Vuex.Store({
+    modules: {
+      a: moduleA,
+      b: moduleB
+    }
+  })
+  
+  store.state.a // -> moduleA 的状态
+  store.state.b // -> moduleB 的状态
+  ```
+
+#### （1）局部状态
+
+- 对于模块内部的 mutation 和 getter，接收的第一个参数是**模块的局部状态对象**。
+
+  ```js
+  const moduleA = {
+    state: () => ({
+      count: 0
+    }),
+    mutations: {
+      increment (state) {
+        // 这里的 `state` 对象是模块的局部状态
+        state.count++
+      }
+    },
+  
+    getters: {
+      doubleCount (state) {
+        return state.count * 2
+      }
+    }
+  }
+  ```
+
+- 对于模块内部的 action，局部状态通过 `context.state` 暴露出来，根节点状态则为 `context.rootState`：
+
+  ```js
+  const moduleA = {
+    // ...
+    actions: {
+      incrementIfOddOnRootSum ({ state, commit, rootState }) {
+        if ((state.count + rootState.count) % 2 === 1) {
+          commit('increment')
+        }
+      }
+    }
+  }
+  ```
+
+- 对于模块内部的 getter，根节点状态会作为第三个参数暴露出来：
+
+  ```js
+  const moduleA = {
+    // ...
+    getters: {
+      sumWithRootCount (state, getters, rootState) {
+        return state.count + rootState.count
+      }
+    }
+  }
+  ```
+
+#### （2）命名空间
+
+- 如果希望你的模块具有更高的封装度和复用性，你可以通过添加 `namespaced: true` 的方式使其成为带命名空间的模块。
+
+- 当模块被注册后，它的所有 getter、action 及 mutation 都会自动根据模块注册的路径调整命名。
+
+  ```js
+  // loginModule.js
+  export default {
+      namespaced:true,
+      state:{
+          userinfo:{
+              user:'',
+              token:''
+          }
+      },
+      mutations:{
+          //设置用户信息
+          setUser(state,payload){
+              state.userinfo = payload;
+          },
+          //清空
+          clearUser(state){
+              state.userinfo={
+                  user:'',
+                  token:''  
+              }
+          }
+      },
+  }
+  
+  // index.js
+  import Vue from 'vue'
+  import Vuex from 'vuex'
+  import loginModule from './modules/loginModule'
+  
+  Vue.use(Vuex)
+  
+  export default new Vuex.Store({
+    state: {
+    },
+    mutations: {
+    },
+    actions: {
+    },
+    modules: {
+      loginModule
+    }
+  })
+  ```
+
+#### （3）模块动态注册
+
+- 在 store 创建**之后**，你可以使用 `store.registerModule` 方法注册模块。
+
+  ```js
+  import Vuex from 'vuex'
+  const store = new Vuex.Store({ /* 选项 */ })
+  
+  // 注册模块 `myModule`
+  store.registerModule('myModule', {
+    // ...
+  })
+  // 注册嵌套模块 `nested/myModule`
+  store.registerModule(['nested', 'myModule'], {
+    // ...
+  })
+  ```
+
+- 相关方法：
+
+  - 通过 `store.state.myModule` 和 `store.state.nested.myModule` 访问模块的状态。
+  - 通过 `store.unregisterModule(moduleName)` 来动态卸载模块。注意，你不能使用此方法卸载静态模块（即创建 store 时声明的模块）。
+  - 通过 `store.hasModule(moduleName)` 方法检查该模块是否已经被注册到 store。
 
 ## 3、进阶
 
-### 1）类型别名
+### 1）严格模式
 
-- 使用 `type` 创建类型别名，类型别名常用于联合类型。
+- 在严格模式下，无论何时发生了状态变更，只要不是由 mutation 引起的，将会抛出错误。这能保证所有的状态变更都能被调试工具跟踪到。
 
-  ```ts
-  type Name = string;
-  type NameResolver = () => string;
-  type NameOrResolver = Name | NameResolver;
-  function getName(n: NameOrResolver): Name {
-      if (typeof n === 'string') {
-          return n;
-      } else {
-          return n();
+- 严格模式会深度监测状态树来检测不合规的状态变更，==请确保在发布环境下关闭严格模式，以避免性能损失。==
+
+  ```js
+  const store = new Vuex.Store({
+    // ...
+    strict: process.env.NODE_ENV !== 'production'
+  })
+  ```
+
+### 2）表单处理
+
+- 当在严格模式中使用 Vuex 时，在属于 Vuex 的 state 上使用 `v-model` 会比较棘手：
+
+  ```html
+  <input v-model="obj.message">
+  ```
+
+  假设这里的 `obj` 是在计算属性中返回的一个属于 Vuex store 的对象，在用户输入时，`v-model` 会试图直接修改 `obj.message`。在严格模式中，由于这个修改不是在 mutation 函数中执行的, 这里会抛出一个错误。
+
+- 方法是使用带有 setter 的双向绑定计算属性：
+
+  ```js
+  mutations: {
+    updateMessage (state, message) {
+      state.obj.message = message
+    }
+  }
+  
+  // login.vue
+  <input v-model="message">
+  
+  computed: {
+    message: {
+      get () {
+        return this.$store.state.obj.message
+      },
+      set (value) {
+        this.$store.commit('updateMessage', value)
       }
+    }
   }
   ```
 
-### 2）字符串字面量类型
 
-- 字符串字面量类型用来约束取值只能是某几个字符串中的一个。
 
-  ```ts
-  type EventNames = 'click' | 'scroll' | 'mousemove';
-  function handleEvent(ele: Element, event: EventNames) {
-      // do something
-  }
-  
-  handleEvent(document.getElementById('hello'), 'scroll');  // 没问题
-  handleEvent(document.getElementById('world'), 'dblclick'); // 报错，event 不能为 'dblclick'
-  
-  // index.ts(7,47): error TS2345: Argument of type '"dblclick"' is not assignable to parameter of type 'EventNames'.
+# 二、Vue Router
+
+## 1、基础
+
+### 1）概述
+
+#### （1）作用
+
+- 把 Vue Router 添加进来，我们需要做的是，将组件 (components) 映射到路由 (routes)，然后告诉 Vue Router 在哪里渲染它们。
+
+  ```html
+  <div id="app">
+    <h1>Hello App!</h1>
+    <p>
+      <!-- 使用 router-link 组件来导航. -->
+      <!-- 通过传入 `to` 属性指定链接. -->
+      <!-- <router-link> 默认会被渲染成一个 `<a>` 标签 -->
+      <router-link to="/foo">Go to Foo</router-link>
+      <router-link to="/bar">Go to Bar</router-link>
+    </p>
+    <!-- 路由出口 -->
+    <!-- 路由匹配到的组件将渲染在这里 -->
+    <router-view></router-view>
+  </div>
   ```
 
-- ==注意，**类型别名与字符串字面量类型都是使用 `type` 进行定义。**==
+#### （2）定义
 
-### 3）元组
-
-#### （1）定义
-
-- 定义一对值分别为 `string` 和 `number` 的元组，可以只赋值其中一项。
-
-  ```ts
-  let tom: [string, number] = ['Tom', 25];
-  
-  ---
-      
-  let tom: [string, number];
-  tom[0] = 'Tom';
-  ```
-
-- 当赋值或访问一个已知索引的元素时，会得到正确的类型。
+- 创建 router 实例，然后传 `routes` 配置。其中每个路由应该映射一个组件。
 
   ```js
-  let tom: [string, number];
-  tom[0] = 'Tom';
-  tom[1] = 25;
+  const routes = [
+    { path: '/foo', component: Foo },
+    { path: '/bar', component: Bar }
+  ]
   
-  tom[0].slice(1);
-  tom[1].toFixed(2);
+  const router = new VueRouter({
+    routes // (缩写) 相当于 routes: routes
+  })
+  
+  // 4. 创建和挂载根实例。
+  // 记得要通过 router 配置参数注入路由，
+  // 从而让整个应用都有路由功能
+  const app = new Vue({
+    router
+  }).$mount('#app')
   ```
 
-- 但是当直接对元组类型的变量进行初始化或者赋值的时候，需要提供所有元组类型中指定的项。
+- 通过注入路由器，我们可以在任何组件内通过 `this.$router` 访问路由器，也可以通过 `this.$route` 访问当前路由。
 
   ```js
-  let tom: [string, number];
-  tom = ['Tom', 25];
-  let tom: [string, number];
-  tom = ['Tom'];
-  
-  // Property '1' is missing in type '[string]' but required in type '[string, number]'.
-  ```
-
-#### （2）越界元素
-
-- 当添加越界元素时，它的类型会被限制为元组中每个类型的联合类型。
-
-  ```js
-  let tom: [string, number];
-  tom = ['Tom', 25];
-  tom.push('male');
-  tom.push(true);
-  
-  // Argument of type 'true' is not assignable to parameter of type 'string | number'.
-  ```
-
-### 4）枚举
-
-- 枚举（Enum）类型用于取值被限定在一定范围内的场景，比如一周只能有七天，颜色限定为红绿蓝等。
-
-#### （1）定义
-
-- 枚举使用 `enum` 关键字定义。
-
-  ```ts
-  enum Days {Sun, Mon, Tue, Wed, Thu, Fri, Sat};
-  ```
-
-- 枚举成员会被赋值为从 `0` 开始递增的数字，同时也会对枚举值到枚举名进行反向映射：
-
-  ```js
-  enum Days {Sun, Mon, Tue, Wed, Thu, Fri, Sat};
-  
-  console.log(Days["Sun"] === 0); // true
-  console.log(Days["Mon"] === 1); // true
-  console.log(Days["Sat"] === 6); // true
-  
-  console.log(Days[0] === "Sun"); // true
-  console.log(Days[1] === "Mon"); // true
-  console.log(Days[6] === "Sat"); // true
-  ```
-
-#### （2）手动赋值
-
-- 未手动赋值的枚举项会接着上一个枚举项递增。
-
-  ```js
-  enum Days {Sun = 7, Mon = 1, Tue, Wed, Thu, Fri, Sat};
-  
-  console.log(Days["Sun"] === 7); // true
-  console.log(Days["Mon"] === 1); // true
-  console.log(Days["Tue"] === 2); // true
-  console.log(Days["Sat"] === 6); // true
-  ```
-
-- 手动赋值的枚举项也可以为小数或负数，此时后续未手动赋值的项的递增步长仍为 `1`：
-
-  ```js
-  enum Days {Sun = 7, Mon = 1.5, Tue, Wed, Thu, Fri, Sat};
-  
-  console.log(Days["Sun"] === 7); // true
-  console.log(Days["Mon"] === 1.5); // true
-  console.log(Days["Tue"] === 2.5); // true
-  ```
-
-- 手动赋值的枚举项可以不是数字，此时需要使用类型断言来让 tsc 无视类型检查 (编译出的 js 仍然是可用的)：
-
-  ```js
-  enum Days {Sun = 7, Mon, Tue, Wed, Thu, Fri, Sat = <any>"S"};
-  ```
-
-- 如果未手动赋值的枚举项与手动赋值的重复了，后者进行覆盖，TypeScript 是不会察觉到这一点的。
-
-  ```js
-  enum Days {Sun = 3, Mon = 1, Tue, Wed, Thu, Fri, Sat};
-  
-  console.log(Days["Sun"] === 3); // true
-  console.log(Days["Wed"] === 3); // true
-  console.log(Days[3] === "Sun"); // false
-  console.log(Days[3] === "Wed"); // true
-  ```
-
-#### （3）计算所得项
-
-- 枚举项有两种类型：常数项和计算所得项。前面我们所举的例子都是常数项，一个典型的计算所得项的例子：
-
-  ```ts
-  enum Color {Red, Green, Blue = "blue".length};
-  ```
-
-- **在计算所得项后面的是未手动赋值的项，那么它就会因为无法获得初始值而报错**：
-
-  ```ts
-  enum Color {Red = "red".length, Green, Blue};
-  
-  // index.ts(1,33): error TS1061: Enum member must have initializer.
-  // index.ts(1,40): error TS1061: Enum member must have initializer.
-  ```
-
-#### （4）常数枚举
-
-- 常数枚举是使用 `const enum` 定义的枚举类型。
-
-- 常数枚举与普通枚举的区别是，它会在编译阶段被删除，并且不能包含计算成员。
-
-  ```js
-  const enum Directions {
-      Up,
-      Down,
-      Left,
-      Right
-  }
-  
-  let directions = [Directions.Up, Directions.Down, Directions.Left, Directions.Right];
-  
-  ---编译为
-  
-  var directions = [0 /* Up */, 1 /* Down */, 2 /* Left */, 3 /* Right */];
-  ```
-
-#### （5）外部枚举
-
-- 外部枚举（Ambient Enums）是使用 `declare enum` 定义的枚举类型。
-- `declare` 定义的类型只会用于编译时的检查，编译结果中会被删除。
-
-### 5）类
-
-- 传统方法中，JavaScript 通过构造函数实现类的概念，通过原型链实现继承。而在 ES6 中，我们终于迎来了 `class`。
-- TypeScript 除了实现了所有 ES6 中的类的功能以外，还添加了一些新的用法。
-
-#### （1）ES6 类的用法
-
-##### 【1】属性方法
-
-- 使用 `class` 定义类，使用 `constructor` 定义构造函数。通过 `new` 生成新实例的时候，会自动调用构造函数。
-
-  ```js
-  class Animal {
-      public name;
-      constructor(name) {
-          this.name = name;
+  // Home.vue
+  export default {
+    computed: {
+      username() {
+        return this.$route.params.username
       }
-      sayHi() {
-          return `My name is ${this.name}`;
+    },
+    methods: {
+      goBack() {
+        window.history.length > 1 ? this.$router.go(-1) : this.$router.push('/')
       }
+    }
   }
-  
-  let a = new Animal('Jack');
-  console.log(a.sayHi()); // My name is Jack
   ```
 
-##### 【2】类的继承
+### 2）动态路由匹配
 
-- 使用 `extends` 关键字实现继承，子类中使用 `super` 关键字来调用父类的构造函数和方法。
+- 我们经常需要把某种模式匹配到的所有路由，全都映射到同个组件。
+
+#### （1）动态路径参数
+
+- 对于 ID 各不相同的用户，都使用 user 组件来渲染。可以在 `vue-router` 的路由路径中使用动态路径参数。
 
   ```js
-  class Cat extends Animal {
-    constructor(name) {
-      super(name); // 调用父类的 constructor(name)
-      console.log(this.name);
-    }
-    sayHi() {
-      return 'Meow, ' + super.sayHi(); // 调用父类的 sayHi()
-    }
+  const User = {
+    template: '<div>User</div>'
   }
   
-  let c = new Cat('Tom'); // Tom
-  console.log(c.sayHi()); // Meow, My name is Tom
+  const router = new VueRouter({
+    routes: [
+      // 动态路径参数 以冒号开头
+      { path: '/user/:id', component: User }
+    ]
+  })
   ```
 
-##### 【3】存取器
-
-- 使用 getter 和 setter 可以改变属性的赋值和读取行为。
+- 路径参数”使用冒号 `:` 标记。当匹配到一个路由时，参数值会被设置到 `this.$route.params`，可以在每个组件内使用。
 
   ```js
-  class Animal {
-    constructor(name) {
-      this.name = name;
-    }
-    get name() {
-      return 'Jack';
-    }
-    set name(value) {
-      console.log('setter: ' + value);
-    }
+  const User = {
+    template: '<div>User {{ $route.params.id }}</div>'
   }
-  
-  let a = new Animal('Kitty'); // setter: Kitty
-  a.name = 'Tom'; // setter: Tom
-  console.log(a.name); // Jack
   ```
 
-##### 【4】静态方法
+- 路由中设置多段“路径参数”，对应的值都会设置到 `$route.params` 中。
 
-- 使用 `static` 修饰符修饰的方法称为静态方法，它们不需要实例化，而是直接通过类来调用。
+  | 模式                          | 匹配路径            | $route.params                          |
+  | ----------------------------- | ------------------- | -------------------------------------- |
+  | /user/:username               | /user/evan          | `{ username: 'evan' }`                 |
+  | /user/:username/post/:post_id | /user/evan/post/123 | `{ username: 'evan', post_id: '123' }` |
+
+#### （2）响应路由参数的变化
+
+- ==路由参数由 `/user/foo` 导航到 `/user/bar`，原来的组件实例不会被销毁再创建，而是直接被复用。**这也意味着组件的生命周期钩子不会再被调用**。==
+
+- 复用组件时，想对路由参数的变化作出响应，简单地 watch (监测变化) `$route` 对象：
 
   ```js
-  class Animal {
-    static isAnimal(a) {
-      return a instanceof Animal;
+  const User = {
+    template: '...',
+    watch: {
+      $route(to, from) {
+        // 对路由变化作出响应...
+      }
     }
   }
-  
-  let a = new Animal('Jack');
-  Animal.isAnimal(a); // true
-  a.isAnimal(a); // TypeError: a.isAnimal is not a function
   ```
 
-#### （2）ES7 类的用法
-
-##### 【1】实例属性
-
-- ES6 中实例的属性只能通过构造函数中的 `this.xxx` 来定义，ES7 提案中可以直接在类里面定义。
+  或者使用  `beforeRouteUpdate`  导航守卫
 
   ```js
-  class Animal {
-    name = 'Jack';
-  
-    constructor() {
-      // ...
+  const User = {
+    template: '...',
+    beforeRouteUpdate(to, from, next) {
+      // react to route changes...
+      // don't forget to call next()
     }
   }
-  
-  let a = new Animal();
-  console.log(a.name); // Jack
   ```
 
-##### 【2】静态属性
+#### （3）匹配优先级
 
-- ES7 提案中，可以使用 `static` 定义一个静态属性。
+- 同一个路径可以匹配多个路由，此时，匹配的优先级就按照路由的定义顺序：路由定义得越早，优先级就越高。
+
+#### （4）捕获所有路由或 404
+
+- 常规参数只会匹配被 `/` 分隔的 URL 片段中的字符。如果想匹配**任意路径**，我们可以使用通配符 (`*`)：
 
   ```js
-  class Animal {
-    static num = 42;
-  
-    constructor() {
-      // ...
-    }
+  {
+    // 会匹配所有路径
+    path: '*'
   }
-  
-  console.log(Animal.num); // 42
-  ```
-
-#### （3）TS 类的用法
-
-##### 【1】修饰符
-
-- 对标其他语言的 private , public , protected
-
-##### 【2】readonly
-
-- 只读属性关键字，只允许出现在属性声明或索引签名或构造函数中。
-
-  ```ts
-  class Animal {
-    readonly name;
-    public constructor(name) {
-      this.name = name;
-    }
-  }
-  
-  let a = new Animal('Jack');
-  console.log(a.name); // Jack
-  a.name = 'Tom';
-  
-  // index.ts(10,3): TS2540: Cannot assign to 'name' because it is a read-only property.
-  ```
-
-- 注意如果 `readonly` 和其他访问修饰符同时存在的话，需要写在其后面。
-
-  ```ts
-  class Animal {
-    // public readonly name;
-    public constructor(public readonly name) {
-      // this.name = name;
-    }
+  {
+    // 会匹配以 `/user-` 开头的任意路径
+    path: '/user-*'
   }
   ```
 
-##### 【3】抽象类
+### 3）嵌套路由
 
-- `abstract` 用于定义抽象类和其中的抽象方法。
+- **以 `/` 开头的嵌套路径会被当作根路径。 这让你充分的使用嵌套组件而无须设置嵌套的路径。**
 
-- 首先，抽象类是不允许被实例化的。
-
-  ```ts
-  abstract class Animal {
-    public name;
-    public constructor(name) {
-      this.name = name;
-    }
-    public abstract sayHi();
-  }
-  
-  let a = new Animal('Jack');
-  
-  // index.ts(9,11): error TS2511: Cannot create an instance of the abstract class 'Animal'.
-  ```
-
-- 其次，抽象类中的抽象方法必须被子类实现。
-
-  ```ts
-  abstract class Animal {
-    public name;
-    public constructor(name) {
-      this.name = name;
-    }
-    public abstract sayHi();
-  }
-  
-  class Cat extends Animal {
-    public eat() {
-      console.log(`${this.name} is eating.`);
-    }
-  }
-  
-  let cat = new Cat('Tom');
-  
-  // index.ts(9,7): error TS2515: Non-abstract class 'Cat' does not implement inherited abstract member 'sayHi' from class 'Animal'.
-  ```
-
-- 下面是一个正确使用抽象类的例子。
-
-  ```ts
-  abstract class Animal {
-    public name;
-    public constructor(name) {
-      this.name = name;
-    }
-    public abstract sayHi();
-  }
-  
-  class Cat extends Animal {
-    public sayHi() {
-      console.log(`Meow, My name is ${this.name}`);
-    }
-  }
-  
-  let cat = new Cat('Tom');
-  ```
-
-### 6）类与接口
-
-#### （1）类实现接口
-
-- 一个类可以实现多个接口。
-
-  ```ts
-  interface Alarm {
-      alert(): void;
-  }
-  
-  interface Light {
-      lightOn(): void;
-      lightOff(): void;
-  }
-  
-  class Car implements Alarm, Light {
-      alert() {
-          console.log('Car alert');
+  ```js
+  const router = new VueRouter({
+    routes: [
+      {
+        path: '/user/:id',
+        component: User,
+        children: [
+          {
+            // 当 /user/:id/profile 匹配成功，
+            // UserProfile 会被渲染在 User 的 <router-view> 中
+            path: 'profile',
+            component: UserProfile
+          },
+          {
+            // 当 /user/:id/posts 匹配成功
+            // UserPosts 会被渲染在 User 的 <router-view> 中
+            path: 'posts',
+            component: UserPosts
+          }
+        ]
       }
-      lightOn() {
-          console.log('Car light on');
+    ]
+  })
+  ```
+
+- ==访问 `/user/foo` 时，`User` 的出口是不会渲染任何东西，这是因为没有匹配到合适的子路由。如果你想要渲染点什么，可以提供一个 空的 子路由：==
+
+  ```js
+  const router = new VueRouter({
+    routes: [
+      {
+        path: '/user/:id',
+        component: User,
+        children: [
+          // 当 /user/:id 匹配成功，
+          // UserHome 会被渲染在 User 的 <router-view> 中
+          { path: '', component: UserHome }
+  
+          // ...其他子路由
+        ]
       }
-      lightOff() {
-          console.log('Car light off');
+    ]
+  })
+  ```
+
+### 4）编程式导航
+
+#### （1）router.push
+
+- 当你点击 `<router-link>` 时，这个方法会在内部调用，所以说，点击 `<router-link :to="...">` 等同于调用 `router.push(...)`。
+
+  |          声明式           |       编程式       |
+  | :-----------------------: | :----------------: |
+  | `<router-link :to="...">` | `router.push(...)` |
+
+- 参数可以是一个字符串路径，或者一个描述地址的对象。
+
+  ```js
+  // 字符串
+  router.push('home')
+  
+  // 对象
+  router.push({ path: 'home' })
+  
+  // 命名的路由
+  router.push({ name: 'user', params: { userId: '123' }})
+  
+  // 带查询参数，变成 /register?plan=private
+  router.push({ path: 'register', query: { plan: 'private' }})
+  ```
+
+- **注意：如果提供了 `path`，`params` 会被忽略，需要提供路由的 `name` 或手写完整的带有参数的 `path`：**
+
+  ```js
+  const userId = '123'
+  router.push({ name: 'user', params: { userId }}) // -> /user/123
+  router.push({ path: `/user/${userId}` }) // -> /user/123
+  // 这里的 params 不生效
+  router.push({ path: '/user', params: { userId }}) // -> /user
+  ```
+
+#### （2）router.replace
+
+- 跟 `router.push` 很像，唯一的不同就是，它不会向 history 添加新记录，而是跟它的方法名一样 —— 替换掉当前的 history 记录。
+
+  |              声明式               |        编程式         |
+  | :-------------------------------: | :-------------------: |
+  | `<router-link :to="..." replace>` | `router.replace(...)` |
+
+#### （3）router.go
+
+- 这个方法的参数是一个整数，意思是在 history 记录中向前或者后退多少步，类似 `window.history.go(n)`。
+
+  ```js
+  // 在浏览器记录中前进一步，等同于 history.forward()
+  router.go(1)
+  
+  // 后退一步记录，等同于 history.back()
+  router.go(-1)
+  
+  // 前进 3 步记录
+  router.go(3)
+  
+  // 如果 history 记录不够用，那就默默地失败呗
+  router.go(-100)
+  ```
+
+### 5）命名路由
+
+- 可以在创建 Router 实例的时候，在 `routes` 配置中给某个路由设置名称。
+
+  ```js
+  const router = new VueRouter({
+    routes: [
+      {
+        path: '/user/:userId',
+        name: 'user',
+        component: User
       }
-  }
+    ]
+  })
   ```
 
-#### （2）接口继承接口
+  要链接到一个命名路由，可以给 `router-link` 的 `to` 属性传一个对象：
 
-- 接口与接口之间可以是继承关系。
-
-  ```ts
-  interface Alarm {
-      alert(): void;
-  }
-  
-  interface LightableAlarm extends Alarm {
-      lightOn(): void;
-      lightOff(): void;
-  }
+  ```html
+  <router-link :to="{ name: 'user', params: { userId: 123 }}">User</router-link>
   ```
 
-#### （3）接口继承类
+  这跟代码调用 `router.push()` 是一回事：
 
-- ==常见的面向对象语言中，接口是不能继承类的，但是在 TypeScript 中却是可以的：==
+  ```js
+  router.push({ name: 'user', params: { userId: 123 } })
+  ```
 
-  ```ts
-  class Point {
-      x: number;
-      y: number;
-      constructor(x: number, y: number) {
-          this.x = x;
-          this.y = y;
+### 6）命名视图
+
+- 在界面中拥有多个单独命名的视图，而不是只有一个单独的出口。如果 `router-view` 没有设置名字，那么默认为 `default`。
+
+  ```html
+  <router-view class="view one"></router-view>
+  <router-view class="view two" name="a"></router-view>
+  <router-view class="view three" name="b"></router-view>
+  ```
+
+- 一个视图使用一个组件渲染，因此对于同个路由，多个视图就需要多个组件。确保正确使用 `components` 配置 (带上 s)：
+
+  ```js
+  const router = new VueRouter({
+    routes: [
+      {
+        path: '/',
+        components: {
+          default: Foo,
+          a: Bar,
+          b: Baz
+        }
       }
-  }
-  
-  interface Point3d extends Point {
-      z: number;
-  }
-  
-  let point3d: Point3d = {x: 1, y: 2, z: 3};
+    ]
+  })
   ```
 
-- ==但是，接口继承类的时候，也只会继承它的实例属性和实例方法。==
+### 7）重定向
 
-### 7）泛型
+- 通过 `routes` 配置来完成，下面例子是从 `/a` 重定向到 `/b`：
 
-#### （1）定义
+  ```js
+  const router = new VueRouter({
+    routes: [
+      { path: '/a', redirect: '/b' }
+    ]
+  })
+  ```
 
-- 指在定义函数、接口或类的时候，不预先指定具体的类型，而在使用的时候再指定类型的一种特性。
+- 重定向的目标也可以是一个命名的路由：
 
-  ```ts
-  function createArray<T>(length: number, value: T): Array<T> {
-      let result: T[] = [];
-      for (let i = 0; i < length; i++) {
-          result[i] = value;
+  ```js
+  const router = new VueRouter({
+    routes: [
+      { path: '/a', redirect: { name: 'foo' }}
+    ]
+  })
+  ```
+
+### 8）History
+
+- `vue-router` 默认 hash 模式 —— 使用 URL 的 hash 来模拟一个完整的 URL，于是当 URL 改变时，页面不会重新加载。
+
+- 如果不想要很丑的 hash，我们可以用路由的 **history 模式**，这种模式充分利用 `history.pushState` API 来完成 URL 跳转而无须重新加载页面。
+
+  ```js
+  const router = new VueRouter({
+    mode: 'history',
+    routes: [...]
+  })
+  ```
+
+## 2、进阶
+
+### 1）导航守卫
+
+#### （1）全局前置守卫
+
+- 当一个导航触发时，全局前置守卫按照创建顺序调用。守卫是异步解析执行，此时导航在所有守卫 resolve 完之前一直处于 **等待中**。
+
+  ```js
+  const router = new VueRouter({ ... })
+  
+  router.beforeEach((to, from, next) => {
+    // ...
+  })
+  ```
+
+- **`next: Function`**: 一定要调用该方法来 **resolve** 这个钩子。执行效果依赖 `next` 方法的调用参数。
+
+  - **`next()`**: 进行管道中的下一个钩子。如果全部钩子执行完了，则导航的状态就是 **confirmed** (确认的)。
+  - **`next(false)`**: 中断当前的导航。如果浏览器的 URL 改变了 (可能是用户手动或者浏览器后退按钮)，那么 URL 地址会重置到 `from` 路由对应的地址。
+  - **`next('/')` 或者 `next({ path: '/' })`**: 跳转到一个不同的地址。当前的导航被中断，然后进行一个新的导航。
+  - **`next(error)`**: (2.4.0+) 如果传入 `next` 的参数是一个 `Error` 实例，则导航会被终止且该错误会被传递给 [`router.onError()`](https://v3.router.vuejs.org/zh/api/#router-onerror) 注册过的回调。
+
+- 场景1：==用户未能验证身份时重定向到 `/login` 的示例：==
+
+  ```js
+  // BAD
+  router.beforeEach((to, from, next) => {
+    if (to.name !== 'Login' && !isAuthenticated) next({ name: 'Login' })
+    // 如果用户未能验证身份，则 `next` 会被调用两次
+    next()
+  })
+  ```
+
+#### （2）路由独享守卫
+
+- 可以在路由配置上直接定义 `beforeEnter` 守卫：
+
+  ```js
+  const router = new VueRouter({
+    routes: [
+      {
+        path: '/foo',
+        component: Foo,
+        beforeEnter: (to, from, next) => {
+          // ...
+        }
       }
-      return result;
-  }
-  
-  createArray<string>(3, 'x'); // ['x', 'x', 'x']
+    ]
+  })
   ```
 
-- 接着在调用的时候，可以指定它具体的类型为 `string`。当然，也可以不手动指定，而让类型推论自动推算出来。
+#### （3）组件内守卫
 
-#### （2）类型参数
+- 在路由组件内直接定义以下路由导航守卫：
 
-- 定义泛型的时候，可以一次定义多个类型参数
-
-  ```ts
-  function swap<T, U>(tuple: [T, U]): [U, T] {
-      return [tuple[1], tuple[0]];
-  }
-  
-  swap([7, 'seven']); // ['seven', 7]
-  ```
-
-#### （3）泛型约束
-
-- 在函数内部使用泛型变量的时候，由于事先不知道它是哪种类型，所以不能随意的操作它的属性或方法：
-
-  ```ts
-  function loggingIdentity<T>(arg: T): T {
-      console.log(arg.length);
-      return arg;
-  }
-  
-  // index.ts(2,19): error TS2339: Property 'length' does not exist on type 'T'.
-  ```
-
-- 可以对泛型进行约束，只允许这个函数传入那些包含 `length` 属性的变量。这就是泛型约束。使用了 `extends` 约束了泛型 `T` 必须符合接口 `Lengthwise` 的形状，也就是必须包含 `length` 属性。
-
-  ```ts
-  interface Lengthwise {
-      length: number;
-  }
-  
-  function loggingIdentity<T extends Lengthwise>(arg: T): T {
-      console.log(arg.length);
-      return arg;
+  ```js
+  const Foo = {
+    template: `...`,
+    beforeRouteEnter(to, from, next) {
+      // 在渲染该组件的对应路由被 confirm 前调用
+      // 不！能！获取组件实例 `this`
+      // 因为当守卫执行前，组件实例还没被创建
+    },
+    beforeRouteUpdate(to, from, next) {
+      // 在当前路由改变，但是该组件被复用时调用
+      // 举例来说，对于一个带有动态参数的路径 /foo/:id，在 /foo/1 和 /foo/2 之间跳转的时候，
+      // 由于会渲染同样的 Foo 组件，因此组件实例会被复用。而这个钩子就会在这个情况下被调用。
+      // 可以访问组件实例 `this`
+    },
+    beforeRouteLeave(to, from, next) {
+      // 导航离开该组件的对应路由时调用
+      // 可以访问组件实例 `this`
+    }
   }
   ```
+
+- 场景2：==离开守卫通常用来禁止用户在还未保存修改前突然离开。该导航可以通过 `next(false)` 来取消。==
+
+  ```js
+  beforeRouteLeave (to, from, next) {
+    const answer = window.confirm('Do you really want to leave? you have unsaved changes!')
+    if (answer) {
+      next()
+    } else {
+      next(false)
+    }
+  }
+  ```
+
+#### （4）导航解析流程
+
+1. 导航被触发。
+2. 在失活的组件里调用 `beforeRouteLeave` 守卫。
+3. 调用全局的 `beforeEach` 守卫。
+4. 在重用的组件里调用 `beforeRouteUpdate` 守卫 (2.2+)。
+5. 在路由配置里调用 `beforeEnter`。
+6. 解析异步路由组件。
+7. 在被激活的组件里调用 `beforeRouteEnter`。
+8. 调用全局的 `beforeResolve` 守卫 (2.5+)。
+9. 导航被确认。
+10. 调用全局的 `afterEach` 钩子。
+11. 触发 DOM 更新。
+12. 调用 `beforeRouteEnter` 守卫中传给 `next` 的回调函数，创建好的组件实例会作为回调函数的参数传入。
+
+### 2）路由元信息
+
+- 定义路由的时候可以配置 `meta` 字段，遍历 `$route.matched` 来检查路由记录中的 `meta` 字段。
+
+  ```js
+  const router = new VueRouter({
+    routes: [
+      {
+        path: '/foo',
+        component: Foo,
+        children: [
+          {
+            path: 'bar',
+            component: Bar,
+            // a meta field
+            meta: { requiresAuth: true }
+          }
+        ]
+      }
+    ]
+  })
+  ```
+
+### 3）过渡动效
+
+#### （1）全局路由过渡
+
+- `<router-view>` 是基本的动态组件，所以我们可以用 `<transition>` 组件给它添加一些过渡效果：
+
+  ```html
+  <transition>
+    <router-view></router-view>
+  </transition>
+  ```
+
+#### （2）单个路由过渡
+
+- 让每个路由组件有各自的过渡效果，可以在各路由组件内使用 `<transition>` 并设置不同的 name。
+
+  ```js
+  const Foo = {
+    template: `
+      <transition name="slide">
+        <div class="foo">...</div>
+      </transition>
+    `
+  }
+  
+  const Bar = {
+    template: `
+      <transition name="fade">
+        <div class="bar">...</div>
+      </transition>
+    `
+  }
+  ```
+
+#### （3）基于路由的动态过渡
+
+- 可以基于当前路由与目标路由的变化关系，动态设置过渡效果：
+
+  ```html
+  <!-- 使用动态的 transition name -->
+  <transition :name="transitionName">
+    <router-view></router-view>
+  </transition>
+  
+  // 接着在父组件内
+  // watch $route 决定使用哪种过渡
+  watch: {
+    '$route' (to, from) {
+      const toDepth = to.path.split('/').length
+      const fromDepth = from.path.split('/').length
+      this.transitionName = toDepth < fromDepth ? 'slide-right' : 'slide-left'
+    }
+  }
+  ```
+
+### 4）滚动行为
+
+- 切换到新路由时，想要页面滚到顶部或者是保持原先的滚动位置， `vue-router` 可以自定义路由切换时页面如何滚动。
+
+- 当创建一个 Router 实例，你可以提供一个 `scrollBehavior` 方法：
+
+  - 第三个参数 `savedPosition` 当且仅当 `popstate` 导航 (通过浏览器的 前进/后退 按钮触发) 时才可用。
+
+  ```js
+  const router = new VueRouter({
+    routes: [...],
+    scrollBehavior (to, from, savedPosition) {
+      // return 期望滚动到哪个的位置
+    }
+  })
+  ```
+
+- 场景3：简单滚回顶部
+
+  ```js
+  scrollBehavior (to, from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
+    } else {
+      return { x: 0, y: 0 }
+    }
+  }
+  ```
+
+#### （1）异步滚动
+
+- 可以返回一个 Promise 来得出预期的位置描述：
+
+  ```js
+  scrollBehavior (to, from, savedPosition) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve({ x: 0, y: 0 })
+      }, 500)
+    })
+  }
+  ```
+
+#### （2）平滑滚动
+
+- 将 `behavior` 选项添加到 `scrollBehavior` 内部返回的对象中，就可以启用原生平滑滚动：
+
+  ```js
+  scrollBehavior (to, from, savedPosition) {
+    if (to.hash) {
+      return {
+        selector: to.hash,
+        behavior: 'smooth',
+      }
+    }
+  }
+  ```
+
+### 5）导航故障
+
+- *导航故障*是一个 `Error` 实例，附带了一些额外的属性。
+
+- 检查一个错误是否来自于路由器，可以使用 `isNavigationFailure` 函数：
+
+  - 如果你忽略第二个参数：`isNavigationFailure(failure)`，那么就只会检查这个错误是不是一个*导航故障*。
+
+  ```js
+  import VueRouter from 'vue-router'
+  const { isNavigationFailure, NavigationFailureType } = VueRouter
+  
+  // 正在尝试访问 admin 页面
+  router.push('/admin').catch(failure => {
+    if (isNavigationFailure(failure, NavigationFailureType.redirected)) {
+      // 向用户显示一个小通知
+      showToast('Login in order to access the admin panel')
+    }
+  })
+  ```
+
+#### （1）故障类型
+
+`NavigationFailureType` 可以帮助开发者来区分不同类型的*导航故障*。有四种不同的类型：
+
+- `redirected`：在导航守卫中调用了 `next(newLocation)` 重定向到了其他地方。
+- `aborted`：在导航守卫中调用了 `next(false)` 中断了本次导航。
+- `cancelled`：在当前导航还没有完成之前又有了一个新的导航。比如，在等待导航守卫的过程中又调用了 `router.push`。
+- `duplicated`：导航被阻止，因为我们已经在目标位置了。
+
+#### （2）故障属性
+
+- 所有的导航故障都会有 `to` 和 `from` 属性，分别用来表达这次失败的导航的目标位置和当前位置。
+
+  ```js
+  // 正在尝试访问 admin 页面
+  router.push('/admin').catch(failure => {
+    if (isNavigationFailure(failure, NavigationFailureType.redirected)) {
+      failure.to.path // '/admin'
+      failure.from.path // '/'
+    }
+  })
+  ```
+
+
+  
